@@ -87,6 +87,10 @@ abstract class SharedTheme extends PuzzleTheme {
                                   ),
                                 ),
                               ),
+                              ListTile(
+                                title: const Text('Fitness'),
+                                trailing: Text(puzzle.fitness.toString()),
+                              ),
                               const Divider(),
                               CheckboxListTile(
                                 title: const Text('Auto play'),

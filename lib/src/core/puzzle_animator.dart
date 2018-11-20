@@ -15,6 +15,8 @@ abstract class PuzzleProxy {
 
   bool get solved;
 
+  int get fitness;
+
   void reset();
 
   void clickOrShake(int tileValue);
@@ -56,6 +58,9 @@ class PuzzleAnimator implements PuzzleProxy {
 
   @override
   int get tileCount => _puzzle.tileCount;
+
+  @override
+  int get fitness => _puzzle.fitness;
 
   @override
   int get incorrectTiles => _puzzle.incorrectTiles;
