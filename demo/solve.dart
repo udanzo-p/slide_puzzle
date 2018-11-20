@@ -1,3 +1,5 @@
+import 'dart:math' show min;
+
 import 'package:slide_puzzle/src/core/puzzle.dart';
 
 import 'shortest_path.dart';
@@ -21,32 +23,43 @@ void main() {
     throw UnsupportedError('must be solvable!');
   }
 
+  final minIncorrect = <int, int>{};
+
   final solvedConfig =
       Puzzle.raw(puzzle.width, List.generate(puzzle.length, (i) => i));
 
   var count = 0;
   List<Puzzle> bestSolution;
-  for (var solution in shortestPaths<Puzzle>(
-    puzzle,
-    solvedConfig,
-    _allMovable,
-    compare: _compare,
-  )) {
+  for (var solution in shortestPaths<Puzzle>(puzzle, solvedConfig, _allMovable,
+      compare: _compare, minDistanceToSolution: _minDistanceToSolution)) {
     count++;
     print('solution #$count - ${solution.length}');
     bestSolution = solution;
+
+    for (var i = 0; i < 23; i++) {
+      minIncorrect[i] = min(minIncorrect[i] ?? puzzle.length,
+          solution[solution.length - (i + 1)].incorrectTiles);
+    }
+
+    print(minIncorrect);
   }
   print('Time to create shortest path: ${watch.elapsed}');
 
   print(bestSolution.length);
-
-  final solutionHash = bestSolution.toString().hashCode;
-  assert(solutionHash == 243120297);
 }
 
 Iterable<Puzzle> _allMovable(Puzzle entry) => entry.allMovable();
 
 int _compare(Puzzle a, Puzzle b) => a.fitness.compareTo(b.fitness);
+
+int _minDistanceToSolution(Puzzle p) {
+  final incorrect = p.incorrectTiles;
+
+  if (incorrect > 3) {
+    return 3;
+  }
+  return incorrect;
+}
 
 /*
 {loopCount: 43701674, elapsed: 0:05:57.969410, graphSize: 31612001, % max g: 100.4, toVisit: 3835481, % max v: 100.7, bestOption: 27, timeToBest: 0:00:03.867554}
