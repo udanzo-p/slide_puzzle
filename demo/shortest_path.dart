@@ -47,7 +47,7 @@ Iterable<List<T>> shortestPaths<T>(
       value = (storedDistanceA + minDistanceToSolution(a))
           .compareTo(storedDistanceB + _deafultMinDistanceToSolution(b));
 
-      if (value != null) {
+      if (value != 0) {
         fancyHelps++;
       }
     }
