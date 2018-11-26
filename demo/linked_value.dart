@@ -41,4 +41,7 @@ class _LinkedThing<T> implements LinkedValue<T> {
 
     return list.reversed.toList(growable: false);
   }
+
+  @override
+  String toString() => '${super.toString()} ($length)';
 }

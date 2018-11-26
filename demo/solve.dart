@@ -5,18 +5,9 @@ import 'package:slide_puzzle/src/core/puzzle.dart';
 import 'shortest_path.dart';
 
 void main() {
-  // valid starting configurations for 2x3 = 360
-  // valid starting configurations for 2x4 = 20160
-  // valid starting configurations for 3x3 = 181440 - ~1.6s
-  // valid starting configurations for 4x3 > 17730000 (OOME)
-
-  //final width = 4, height = 4;
-
   final watch = Stopwatch()..start();
 
-  final puzzle = Puzzle.parse('''11  6  9  0
- 1  8  5 10
- 7  4  3  2''');
+  final puzzle = Puzzle(4, 4);
   print(puzzle);
 
   if (!puzzle.solvable) {
@@ -36,12 +27,16 @@ void main() {
     print('solution #$count - ${solution.length}');
     bestSolution = solution;
 
-    for (var i = 0; i < 23; i++) {
+    for (var i = 0; i < min(solution.length, 22); i++) {
       minIncorrect[i] = min(minIncorrect[i] ?? puzzle.length,
           solution[solution.length - (i + 1)].incorrectTiles);
     }
 
     print(minIncorrect);
+
+    //print(solution.join('\n\n'));
+
+    //print('solution #$count - ${solution.length}');
   }
   print('Time to create shortest path: ${watch.elapsed}');
 
@@ -55,8 +50,9 @@ int _compare(Puzzle a, Puzzle b) => a.fitness.compareTo(b.fitness);
 int _minDistanceToSolution(Puzzle p) {
   final incorrect = p.incorrectTiles;
 
-  if (incorrect > 3) {
-    return 3;
+  const maxThing = 6;
+  if (incorrect >= maxThing) {
+    return maxThing;
   }
   return incorrect;
 }

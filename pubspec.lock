@@ -130,6 +130,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.6.1+1"
+  json_annotation:
+    dependency: transitive
+    description:
+      name: json_annotation
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.0"
   json_rpc_2:
     dependency: transitive
     description:
@@ -303,6 +310,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.9.3"
+  stats:
+    dependency: "direct dev"
+    description:
+      name: stats
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.2.0+2"
   stream_channel:
     dependency: transitive
     description:

@@ -29,32 +29,11 @@ Iterable<List<T>> shortestPaths<T>(
     return;
   }
 
-  minDistanceToSolution ??= _deafultMinDistanceToSolution;
+  minDistanceToSolution ??= _defaultMinDistanceToSolution;
 
   distances[start] = LinkedValue();
 
-  var fancyHelpTries = 0;
-  var fancyHelps = 0;
-
-  int compareItems(T a, T b) {
-    var value = compare(a, b);
-
-    if (value == 0) {
-      final storedDistanceA = distances[a].length;
-      final storedDistanceB = distances[b].length;
-
-      fancyHelpTries++;
-      value = (storedDistanceA + minDistanceToSolution(a))
-          .compareTo(storedDistanceB + _deafultMinDistanceToSolution(b));
-
-      if (value != 0) {
-        fancyHelps++;
-      }
-    }
-    return value;
-  }
-
-  final toVisit = HeapPriorityQueue(compareItems)..add(start);
+  final toVisit = HeapPriorityQueue(compare)..add(start);
 
   List<T> bestOption;
   Duration bestOptionTime;
@@ -62,8 +41,8 @@ Iterable<List<T>> shortestPaths<T>(
   var loopCount = 0;
 
   final watch = Stopwatch()..start();
-  final second2 = const Duration(seconds: 2);
-  var lastLoopTime = second2;
+  final second5 = const Duration(seconds: 5);
+  var lastLoopTime = second5;
   var maxDistancesLength = 0;
   var maxToVisitLength = 0;
 
@@ -77,19 +56,26 @@ Iterable<List<T>> shortestPaths<T>(
     }
   }
 
+  var cleanupsPerLoop = 0;
+  var replacements = 0;
+  var loopsPerLog = 0;
+
   void debugPrint() {
     final map = <String, dynamic>{
       'loopCount': loopCount,
       'elapsed': watch.elapsed,
-      'loops per ms': loopCount ~/ watch.elapsedMilliseconds,
       'graphSize': distances.length.toStringAsExponential(3),
       '% max g': _pct(distances.length, maxDistancesLength),
       'toVisit': toVisit.length.toStringAsExponential(3),
       '% max v': _pct(toVisit.length, maxToVisitLength),
-      'fh': fancyHelps,
-      'fht': fancyHelpTries,
-      'fhr': _pct(fancyHelps, fancyHelpTries),
+      'loops per log': loopCount - loopsPerLog,
+      'cleanups': cleanupsPerLoop,
+      'updates': replacements,
     };
+
+    cleanupsPerLoop = 0;
+    replacements = 0;
+    loopsPerLog = loopCount;
 
     updateMaxStats();
 
@@ -105,13 +91,8 @@ Iterable<List<T>> shortestPaths<T>(
     print('CLEAN: start');
     debugPrint();
     distances.removeWhere((k, v) {
-      return (v.length + minDistanceToSolution(k)) > bestOption.length;
+      return v.length >= bestOption.length;
     });
-
-    final queueClean = HashSet<T>(equals: equals, hashCode: hashCode)
-      ..addAll(toVisit.removeAll());
-
-    toVisit.addAll(queueClean.where(distances.containsKey));
 
     debugPrint();
     print('CLEAN: end\n');
@@ -121,7 +102,7 @@ Iterable<List<T>> shortestPaths<T>(
     loopCount++;
 
     if (watch.elapsed > lastLoopTime) {
-      lastLoopTime = watch.elapsed + second2;
+      lastLoopTime = watch.elapsed + second5;
       debugPrint();
     }
 
@@ -132,39 +113,49 @@ Iterable<List<T>> shortestPaths<T>(
       continue;
     }
     final currentPathMinDistanceToSolution =
-        minDistanceToSolution(current) + currentPath.length;
+        currentPath.length + minDistanceToSolution(current);
 
     if (bestOption != null &&
         currentPathMinDistanceToSolution >= bestOption.length) {
       // Skip any existing `toVisit` items that have no chance of being
       // better than bestOption (if it exists)
+      distances.remove(current);
+      cleanupsPerLoop++;
       continue;
     }
 
     for (var edge in edges(current)) {
       assert(edge != null, '`edges` cannot return null values.');
 
-      var pathToEdge = distances[edge];
+      final pathToEdge = distances[edge];
       // We haven't visited this node yet, or the path to this node is shorter
       // than the one we currently know
       if (pathToEdge == null ||
           pathToEdge.length > currentPathMinDistanceToSolution) {
-        pathToEdge = currentPath.followedBy(edge);
+        final newPathToEdge = currentPath.followedBy(edge);
 
         if (equals(edge, target)) {
-          assert(bestOption == null || bestOption.length > pathToEdge.length);
-          bestOption = pathToEdge.toList();
+          assert(
+              bestOption == null || bestOption.length > newPathToEdge.length);
+          bestOption = newPathToEdge.toList();
           bestOptionTime = watch.elapsed;
 
           yield bestOption;
 
           doCleanup();
+          break;
         }
 
-        distances[edge] = pathToEdge;
-        if (bestOption == null || bestOption.length > pathToEdge.length) {
+        if (bestOption == null || bestOption.length > newPathToEdge.length) {
           // Only add a node to visit if it might be a better path to the
           // target node
+
+          if (pathToEdge != null) {
+            replacements++;
+            assert(newPathToEdge.length < pathToEdge.length);
+          }
+
+          distances[edge] = newPathToEdge;
           toVisit.add(edge);
         }
       }
@@ -174,8 +165,8 @@ Iterable<List<T>> shortestPaths<T>(
   debugPrint();
 }
 
-String _pct(int a, int b) => (100 * (a / b)).toStringAsFixed(1);
+String _pct(int a, int b) => (100 * (a / b)).toStringAsFixed(1).padLeft(5);
 
 bool _defaultEquals(a, b) => a == b;
 
-int _deafultMinDistanceToSolution(a) => 1;
+int _defaultMinDistanceToSolution(a) => 1;
